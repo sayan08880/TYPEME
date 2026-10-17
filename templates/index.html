@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TYPEME</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container" id="app">
+        <!-- Mobile Header -->
+        <header class="mobile-header">
+            <button class="icon-btn" id="openLeftSidebar" aria-label="Open settings">
+                <i data-lucide="settings"></i>
+            </button>
+            <h1 class="logo">TypeLux</h1>
+            <button class="icon-btn" id="openRightSidebar" aria-label="Open progress">
+                <i data-lucide="bar-chart-3"></i>
+            </button>
+        </header>
+
+        <!-- Left Sidebar -->
+        <aside class="sidebar left-sidebar glass-panel" id="leftSidebar">
+            <div class="sidebar-header">
+                <h2><i data-lucide="settings-2"></i> Settings</h2>
+                <button class="icon-btn close-sidebar" id="closeLeftSidebar" aria-label="Close">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-content">
+                <!-- Custom Text -->
+                <section class="settings-section">
+                    <h3><i data-lucide="file-text"></i> Custom Text</h3>
+                    <div class="custom-text-area">
+                        <textarea id="customTextInput" placeholder="Paste your own text, story, or practice material here..." maxlength="200000"></textarea>
+                        <div class="counters">
+                            <span id="wordCounter">0 / 30,000 words</span>
+                            <span id="charCounter">0 characters</span>
+                        </div>
+                        <div class="error-message" id="customTextError"></div>
+                        <div class="btn-row">
+                            <button class="btn btn-primary" id="loadCustomText">
+                                <i data-lucide="play"></i> Load Text
+                            </button>
+                            <button class="btn btn-secondary" id="clearCustomText">
+                                <i data-lucide="trash-2"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="file-upload-zone" id="fileUploadZone">
+                        <i data-lucide="upload-cloud"></i>
+                        <p>Drop a .txt file here or click to upload</p>
+                        <input type="file" id="fileInput" accept=".txt" hidden>
+                    </div>
+                </section>
+
+                <!-- Sound Settings -->
+                <section class="settings-section">
+                    <h3><i data-lucide="volume-2"></i> Sound</h3>
+                    <div class="setting-row">
+                        <label class="toggle-label">
+                            <span>Keyboard Sounds</span>
+                            <input type="checkbox" id="soundEnabled" checked>
+                            <span class="toggle-switch"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <label for="soundVolume">Volume</label>
+                        <input type="range" id="soundVolume" min="0" max="100" value="70">
+                        <span id="volumeValue">70%</span>
+                    </div>
+                    <div class="setting-row">
+                        <label for="soundStyle">Sound Style</label>
+                        <select id="soundStyle">
+                            <option value="soft-piano">Soft Piano</option>
+                            <option value="gentle-synth">Gentle Synth</option>
+                            <option value="typewriter">Classic Typewriter</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Display Settings -->
+                <section class="settings-section">
+                    <h3><i data-lucide="palette"></i> Display</h3>
+                    <div class="setting-row">
+                        <label class="toggle-label">
+                            <span>Character Highlighting</span>
+                            <input type="checkbox" id="highlightEnabled" checked>
+                            <span class="toggle-switch"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <label for="themeSelect">Theme</label>
+                        <select id="themeSelect">
+                            <option value="dark">Dark Glass</option>
+                            <option value="light">Light Glass</option>
+                        </select>
+                    </div>
+                    <div class="setting-row">
+                        <label for="fontFamily">Font</label>
+                        <select id="fontFamily">
+                            <option value="jetbrains">JetBrains Mono</option>
+                            <option value="inter">Inter</option>
+                            <option value="system">System UI</option>
+                            <option value="serif">Georgia (Serif)</option>
+                            <option value="mono">Courier New</option>
+                        </select>
+                    </div>
+                    <div class="setting-row font-size-row">
+                        <label>Font Size</label>
+                        <div class="font-size-controls">
+                            <button type="button" class="btn btn-sm icon-only" id="fontSizeDown" aria-label="Decrease font size">−</button>
+                            <span id="fontSizeValue">18px</span>
+                            <button type="button" class="btn btn-sm icon-only" id="fontSizeUp" aria-label="Increase font size">+</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary full-width" id="resetSettings">
+                        <i data-lucide="rotate-ccw"></i> Reset to Defaults
+                    </button>
+                </section>
+            </div>
+        </aside>
+
+        <!-- Desktop floating toggle buttons -->
+        <button class="sidebar-toggle left-toggle" id="toggleLeftSidebar" aria-label="Toggle settings">
+            <i data-lucide="settings-2"></i>
+        </button>
+        <button class="sidebar-toggle right-toggle" id="toggleRightSidebar" aria-label="Toggle progress">
+            <i data-lucide="bar-chart-3"></i>
+        </button>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="typing-workspace glass-panel">
+                <div class="workspace-header">
+                    <div class="story-info">
+                        <h2 id="storyTitle">Loading...</h2>
+                        <span id="storyAuthor"></span>
+                    </div>
+                    <div class="live-stats">
+                        <div class="stat">
+                            <span class="stat-label">WPM</span>
+                            <span class="stat-value" id="liveWpm">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Accuracy</span>
+                            <span class="stat-value" id="liveAccuracy">100%</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Time</span>
+                            <span class="stat-value" id="liveTimer">0:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-display-container" id="textDisplayContainer">
+                    <div class="text-display" id="textDisplay"></div>
+                </div>
+
+                <!-- Fixed bottom bar: Start / Stop + typing input -->
+                <div class="floating-input-bar">
+                    <!-- Idle state: big Start button -->
+                    <div class="start-panel" id="startPanel">
+                        <button class="btn btn-start" id="startTypingBtn">
+                            <i data-lucide="play"></i> Start Typing
+                        </button>
+                        <div class="workspace-controls">
+                            <button class="btn btn-secondary" id="restartBtnIdle">
+                                <i data-lucide="rotate-ccw"></i> Restart
+                            </button>
+                            <button class="btn btn-secondary" id="newStoryBtnIdle">
+                                <i data-lucide="book-open"></i> New Story
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Active state: input + Stop -->
+                    <div class="typing-panel hidden" id="typingPanel">
+                        <div class="typing-input-area">
+                            <input type="text" id="typingInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="TYPE HIGHLIGHT TEXT" aria-label="Typing input">
+                        </div>
+                        <div class="workspace-controls">
+                            <button class="btn btn-stop" id="stopTypingBtn">
+                                <i data-lucide="square"></i> Stop
+                            </button>
+                            <button class="btn btn-secondary" id="restartBtn">
+                                <i data-lucide="rotate-ccw"></i> Restart
+                            </button>
+                            <button class="btn btn-secondary" id="newStoryBtn">
+                                <i data-lucide="book-open"></i> New Story
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar -->
+        <aside class="sidebar right-sidebar glass-panel" id="rightSidebar">
+            <div class="sidebar-header">
+                <h2><i data-lucide="target"></i> Progress</h2>
+                <button class="icon-btn close-sidebar" id="closeRightSidebar" aria-label="Close">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-content">
+                <section class="settings-section">
+                    <h3>Line Target</h3>
+                    <div class="target-display">
+                        <span class="target-number" id="targetDisplay">100</span>
+                        <span class="target-label">lines</span>
+                    </div>
+                    <div class="target-presets">
+                        <button class="preset-btn" data-target="5">5</button>
+                        <button class="preset-btn" data-target="10">10</button>
+                        <button class="preset-btn" data-target="25">25</button>
+                        <button class="preset-btn" data-target="50">50</button>
+                        <button class="preset-btn active" data-target="100">100</button>
+                    </div>
+                    <div class="setting-row">
+                        <label for="customTarget">Custom</label>
+                        <input type="number" id="customTarget" min="1" max="500" value="100">
+                        <button class="btn btn-sm" id="applyCustomTarget">Set</button>
+                    </div>
+                </section>
+
+                <section class="settings-section">
+                    <h3>Progress</h3>
+                    <div class="progress-stats">
+                        <div class="progress-row">
+                            <span>Completed</span>
+                            <span id="completedLines">0</span>
+                        </div>
+                        <div class="progress-row">
+                            <span>Remaining</span>
+                            <span id="remainingLines">100</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="progressBar"></div>
+                        </div>
+                        <div class="progress-percent" id="progressPercent">0%</div>
+                    </div>
+                    <button class="btn btn-secondary full-width" id="resetTargetBtn">
+                        <i data-lucide="refresh-cw"></i> Reset Target
+                    </button>
+                </section>
+
+                <section class="settings-section">
+                    <h3>Live Stats</h3>
+                    <div class="live-stats-panel">
+                        <div class="stat-item">
+                            <span class="label">Correct</span>
+                            <span class="value" id="statCorrect">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Incorrect</span>
+                            <span class="value" id="statIncorrect">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Total Typed</span>
+                            <span class="value" id="statTotal">0</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- History -->
+                <section class="settings-section history-section">
+                    <h3><i data-lucide="history"></i> History</h3>
+                    <p class="history-hint">Last 20 sessions · click a label to view details</p>
+                    <div class="history-list" id="historyList">
+                        <div class="history-empty" id="historyEmpty">No practice history yet.</div>
+                    </div>
+                    <div class="history-detail hidden" id="historyDetail">
+                        <div class="history-detail-header">
+                            <span class="history-detail-label" id="historyDetailLabel">T1</span>
+                            <button class="icon-btn" id="closeHistoryDetail" aria-label="Close detail">
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                        <div class="history-detail-body" id="historyDetailBody"></div>
+                    </div>
+                    <button class="btn btn-secondary full-width" id="clearHistoryBtn">
+                        <i data-lucide="trash-2"></i> Clear History
+                    </button>
+                </section>
+            </div>
+        </aside>
+
+        <!-- Overlay for mobile sidebars -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    </div>
+
+    <!-- Results Modal -->
+    <div class="modal-overlay" id="resultsModal">
+        <div class="modal glass-panel">
+            <div class="modal-header">
+                <h2><i data-lucide="trophy"></i> Practice Complete</h2>
+                <button class="icon-btn" id="closeModal" aria-label="Close">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="results-grid">
+                    <div class="result-card highlight">
+                        <span class="result-value" id="resultNetWpm">0</span>
+                        <span class="result-label">Net WPM</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-value" id="resultGrossWpm">0</span>
+                        <span class="result-label">Gross WPM</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-value" id="resultAccuracy">0%</span>
+                        <span class="result-label">Accuracy</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-value" id="resultTime">0:00</span>
+                        <span class="result-label">Time</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-value" id="resultCorrect">0</span>
+                        <span class="result-label">Correct Chars</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-value" id="resultIncorrect">0</span>
+                        <span class="result-label">Incorrect Chars</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-value" id="resultTotal">0</span>
+                        <span class="result-label">Total Typed</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-value" id="resultLines">0 / 0</span>
+                        <span class="result-label">Lines Completed</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="tryAgainBtn">
+                    <i data-lucide="rotate-ccw"></i> Try Again
+                </button>
+                <button class="btn btn-secondary" id="anotherStoryBtn">
+                    <i data-lucide="book-open"></i> Another Story
+                </button>
+                <button class="btn btn-secondary" id="changeTargetBtn">
+                    <i data-lucide="target"></i> Change Target
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/sounds.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/typing.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
